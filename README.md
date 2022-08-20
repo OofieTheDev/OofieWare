@@ -14,7 +14,7 @@ This is a ransomware purely written in Python. It contains all the features a re
 
 I wrote this as I've been hearing of ransomware for sometime, but never tried to write it myself. So I finally overcame my procrastination and wrote this.
 
-Note that this ransomware is meant for EDUCATIONAl purposes only. In the process of writing this, I educated myself on how ransomware code works, and had to think from the perspective of a malicious actor to make it as realistic as possible. I do not support or condone any criminal activity, and I am not responsible for the actions of anyone who might use this.
+Note that this ransomware is meant for EDUCATIONAL purposes only. In the process of writing this, I educated myself on how ransomware code works, and had to think from the perspective of a malicious actor to make it as realistic as possible. I do not support or condone any criminal activity, and I am not responsible for the actions of anyone who might use this.
 
 Before we delve into the code, special thanks to [@w3w3w3](https://github.com/ncorbuk) for inspiring me to write this. I took reference from his ransomware, though of course I added some of my own features and ways of doing things. The things we can learn from the code of others never ceases to amaze me.
 
@@ -69,7 +69,7 @@ def wait_till_finish(self):
 
 The method I originally set to directly run after crypt_system was `enc_key()`, which encrypts the symmetric key with the public key. And it sets the `self.encrypter` object, which is used to encrypt files, to none. This causes a potential exception as when the `self.encrypter` object is set to None, one/multiple of the threads used to encrypt files > 50MB may still be running, so setting the `self.encrypter` object to None stops the encryption of these large files and causes an exception. Hence, I added this `wait_till_finish` method, which takes the threads previously appended to `self.thread`s and applies the `.join()` method to them, effectively blocking the main loop from proceeding to `enc_key` until all the large files have been encrypted as well. This prevents the exception and ensures that the encryption is completed. 
 
-self.threads is then set to None to facilitate later decryption of the system.
+`self.threads` is then set to None to facilitate later decryption of the system.
 
 ### elevate_ransom_window()
 
