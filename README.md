@@ -1,5 +1,7 @@
 # Ooofieware - A ransomware in Python
 
+![RansomWindow](./assets/ransom.png)
+
 ## :pushpin: Quick Start
 
 First, make sure the `.show_sym_key` method in `oofieware.py` is commented out. This method is meant only for debugging purposes, as it writes the symmetric AES key used to encrypt the files to the Desktop.

