@@ -301,6 +301,6 @@ def attack():
     detect.start()
     oof.show_ransom_window()
     
-attack()
+# attack()
     
 # DONT be a retard and run this by accident

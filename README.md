@@ -1,4 +1,4 @@
-# Ooofieware - A ransomware in Python
+# Oofieware - A ransomware in Python
 
 ![RansomWindow](./assets/ransom.png)
 
